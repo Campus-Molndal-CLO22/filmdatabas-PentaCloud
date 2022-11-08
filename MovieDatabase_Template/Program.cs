@@ -1,6 +1,6 @@
 ﻿Console.WriteLine("Hello, Movie fans!");
 
-// Börja med att lägga till Nuget för MySQL HEJSAN
+// Börja med att lägga till Nuget för MySQL
 // Sen kan ni kolla på koden ;)
 
 // Uppgift:
