@@ -19,6 +19,12 @@
         public string IMDBLink { get; }
         public List<Actor> Actors { get; }
 
+        public Movie(string title)
+        {
+            this.Title = title;
+            this.Actors = new List<Actor>();
+        }
+
         public Movie(int movieId, string title, int year, string category, string mainCharacter, string IMDBLink)
         {
             this.MovieId = movieId;

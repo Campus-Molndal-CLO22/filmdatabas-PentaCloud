@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
+    using System.Numerics;
     using System.Text;
     using System.Threading.Tasks;
     using MovieDatabase;
@@ -209,40 +210,83 @@
         //}
         public DataTable Query(string sql)
         {
-            var dt = new DataTable();
-            var adt = new MySqlDataAdapter(sql, connection);
-            adt.Fill(dt);
-            return dt;
+            DataTable dataTable = new DataTable();
+            MySqlDataAdapter dataAdapter = new MySqlDataAdapter(sql, connection);
+            dataAdapter.Fill(dataTable);
+            return dataTable;
         }
         public bool CheckIfMovieExists(Movie movie)
         {
-            var dt = new DataTable();
-            string sql = $"SELECT * FROM Movies WHERE Title = '{movie.Title}' ";
-            dt = Query(sql);
-            if (dt.Rows.Count > 0) return true;
-            else return false;
+            DataTable dataTable = new DataTable();
+            string sql = $"SELECT EXISTS (SELECT * FROM Movies WHERE Title = '{movie.Title}') AS alreadyexists";
+            dataTable = Query(sql);
+            if (Convert.ToInt32(dataTable.Rows[0]["alreadyexists"]) > 0)
+            {
+                return true;
+            }
+            return false;
         }
         public bool CheckIfActorExists(Actor actor)
         {
-            var dt = new DataTable();
-            string sql = $"SELECT * FROM Actors WHERE FirstName = '{actor.FirstName}' AND LastName = '{actor.LastName}'";
-            dt = Query(sql);
-            if (dt.Rows.Count > 0) return true;
-            else return false;
+            DataTable dataTable = new DataTable();
+            string sql = $"SELECT EXISTS (SELECT * FROM Actors WHERE FirstName = '{actor.FirstName}' AND LastName = '{actor.LastName}') AS alreadyexists";
+            dataTable = Query(sql);
+            if (Convert.ToInt32(dataTable.Rows[0]["alreadyexists"]) > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool CheckIfActorMovieExists(int? actorId, int? movieId)
+        {
+            DataTable dataTable = new DataTable();
+            string sql = $"SELECT EXISTS (SELECT * FROM ActorMovie WHERE ActorId = '{actorId}' AND MovieId = '{movieId}') AS alreadyexists";
+            dataTable = Query(sql);
+            if (Convert.ToInt32(dataTable.Rows[0]["alreadyexists"]) > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+        public int? FindIdForActor(Actor actor)
+        {
+            DataTable dataTable = new DataTable();
+            string sql = $"SELECT id FROM Actors WHERE FirstName = '{actor.FirstName}' AND LastName = '{actor.LastName}'";
+            dataTable = Query(sql);
+            if (dataTable.Rows.Count > 0)
+            {
+                return Convert.ToInt32(dataTable.Rows[0]["id"]);
+            }
+            return null;
+        }
+
+        public int? FindIdForMovie(Movie movie)
+        {
+            DataTable dataTable = new DataTable();
+            string sql = $"SELECT MovieId FROM Movies WHERE Title = '{movie.Title}'";
+            dataTable = Query(sql);
+            if (dataTable.Rows.Count > 0)
+            {
+                return Convert.ToInt32(dataTable.Rows[0]["MovieId"]);
+            }
+            return null;
         }
         public void AddMovie()
         {
-            bool exists = false;
             Movie movie = new Movie();
-            string sql = $"INSERT INTO `Movies`(`MovieId`,`Title`, `Year`, `Category`,`MainCharacter`,`IMDBLink`) VALUES ({movie.MovieId},'{movie.Title}',{movie.Year},'{movie.Category}','{movie.MainCharacter}','{movie.IMDBLink}')";
-            exists = CheckIfMovieExists(movie);
+            bool exists = CheckIfMovieExists(movie);
 
             if (exists == false)
             {
+                string sql = $"INSERT INTO `Movies`(`Title`, `Year`, `Category`,`MainCharacter`,`IMDBLink`) VALUES ('{movie.Title}',{movie.Year},'{movie.Category}','{movie.MainCharacter}','{movie.IMDBLink}')";
                 using var cmd = new MySqlCommand(sql, connection);
                 cmd.ExecuteNonQuery();
             }
-            else Console.WriteLine("Den filmen fanns redan");
+            else
+            {
+                Console.WriteLine("That movie already exist");
+            }
             // Kolla om filmen redan finns, uppdatera i så fall
             // Om inte, lägg till filmen i databasen
             // Lägg till skådespelarna i databasen
@@ -250,15 +294,18 @@
         }
         public void DeleteMovie()
         {
-
             Console.WriteLine("Enter title of the Movie you want to delete");
-
-            string movieTitle = Console.ReadLine();
-            string sql = $"DELETE FROM `Movies` WHERE `Title` ='{movieTitle}'";
-            using var cmd = new MySqlCommand(sql, connection);
-            cmd.ExecuteNonQuery();
-
-
+            Movie movieToDelete = new Movie(Console.ReadLine());
+            int? movieIdToDelete = FindIdForMovie(movieToDelete);
+            if (movieIdToDelete != null)
+            {
+                new MySqlCommand($"DELETE FROM `ActorMovie` WHERE `MovieId` = {movieIdToDelete}", connection).ExecuteNonQuery();
+                new MySqlCommand($"DELETE FROM `Movies` WHERE `id` = {movieIdToDelete}", connection).ExecuteNonQuery();
+            }
+            else
+            {
+                Console.WriteLine("That movie did not exist");
+            }
             // Ta bort filmen från databasen
             // Ta bort alla relationer mellan filmen och skådespelarna från databasen
         }
@@ -269,9 +316,17 @@
             string actorFirstName = Console.ReadLine();
             Console.Write("LastName:");
             string actorLastName = Console.ReadLine();
-            string sql = $"DELETE FROM `Actors` WHERE `FirstName` ='{actorFirstName}' AND `LastName` = '{actorLastName}'";
-            using var cmd = new MySqlCommand(sql, connection);
-            cmd.ExecuteNonQuery();
+            Actor actorToDelete = new Actor(actorFirstName, actorLastName);
+            int? actorIdToDelete = FindIdForActor(actorToDelete);
+            if (actorIdToDelete != null)
+            {
+                new MySqlCommand($"DELETE FROM `ActorMovie` WHERE `ActorId` = {actorIdToDelete}", connection).ExecuteNonQuery();
+                new MySqlCommand($"DELETE FROM `Actors` WHERE `id` = {actorIdToDelete}", connection).ExecuteNonQuery();
+            }
+            else
+            {
+                Console.WriteLine("DenThat actor did not exist");
+            }
             // Ta bort skådespelaren från databasen
             // Ta bort alla relationer mellan skådespelaren och filmerna från databasen
         }
@@ -279,19 +334,77 @@
         {
             bool exists = false;
             Actor actor = new Actor();
-            string sql = $"INSERT INTO `Actors`(`Id`,`FirstName`, `LastName`, `BornYear`) VALUES ({actor.Id},'{actor.FirstName}','{actor.LastName}','{actor.BornYear}')";
             exists = CheckIfActorExists(actor);
 
             if (exists == false)
             {
-                using var cmd = new MySqlCommand(sql, connection);
-                cmd.ExecuteNonQuery();
+                new MySqlCommand($"INSERT INTO `Actors`(`Id`,`FirstName`, `LastName`, `BornYear`) VALUES ({actor.Id},'{actor.FirstName}','{actor.LastName}','{actor.BornYear}')", connection).ExecuteNonQuery();
             }
-            else Console.WriteLine("Den filmen fanns redan");
+            else Console.WriteLine("That actor already exist");
 
             // Kolla om skådespelaren finns i databasen
             // Uppdatera i så fall annars
             // Lägg till skådespelaren i databasen
+        }
+
+        public void AddActorToMovie()
+        {
+            Console.WriteLine("Enter the Name of the Actor you want to associate to a movie");
+            Console.Write("FirstName:");
+            string actorFirstName = Console.ReadLine();
+            Console.Write("LastName:");
+            string actorLastName = Console.ReadLine();
+            Actor actorToAssociate = new Actor(actorFirstName, actorLastName);
+            int? actorIdToAssociate = FindIdForActor(actorToAssociate);
+            if (actorIdToAssociate == null)
+            {
+                Console.WriteLine("That actor did not exist");
+                return;
+            }
+
+            Console.WriteLine($"Enter the title of the Movie you want to associate actor {actorFirstName} {actorLastName} with.");
+            Movie movieToAssociate = new Movie(Console.ReadLine());
+            int? movieIdToAssociate = FindIdForMovie(movieToAssociate);
+            if (movieIdToAssociate == null)
+            {
+                Console.WriteLine("That movie did not exist");
+                return;
+            }
+
+            if (!CheckIfActorMovieExists(actorIdToAssociate, movieIdToAssociate))
+            {
+                new MySqlCommand($"INSERT INTO `ActorMovie`(`ActorId`,`MovieId`) VALUES ('{actorIdToAssociate}','{movieIdToAssociate}')", connection).ExecuteNonQuery();
+            }
+        }
+
+        public void RemoveActorFromMovie()
+        {
+            Console.WriteLine("Enter the Name of the Actor you want to remove from a movie");
+            Console.Write("FirstName:");
+            string actorFirstName = Console.ReadLine();
+            Console.Write("LastName:");
+            string actorLastName = Console.ReadLine();
+            Actor actorToRemove = new Actor(actorFirstName, actorLastName);
+            int? actorIdToRemove = FindIdForActor(actorToRemove);
+            if (actorIdToRemove == null)
+            {
+                Console.WriteLine("That actor did not exist");
+                return;
+            }
+
+            Console.WriteLine($"Enter the title of the Movie you want to remove actor {actorFirstName} {actorLastName} from.");
+            Movie movieToRemove = new Movie(Console.ReadLine());
+            int? movieIdToRemove = FindIdForMovie(movieToRemove);
+            if (movieIdToRemove == null)
+            {
+                Console.WriteLine("That movie did not exist");
+                return;
+            }
+
+            if (CheckIfActorMovieExists(actorIdToRemove, movieIdToRemove))
+            {
+                new MySqlCommand($"DELETE FROM `ActorMovie` WHERE `ActorId` = '{actorIdToRemove}' AND `MovieId` = '{movieIdToRemove}'", connection).ExecuteNonQuery();
+            }
         }
 
 #pragma warning restore CS8604 // Possible null reference argument.

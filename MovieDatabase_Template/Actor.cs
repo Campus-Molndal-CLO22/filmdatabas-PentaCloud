@@ -16,6 +16,13 @@
             this.BornYear = bornYear;
             this.Movies = new List<Movie>(); 
         }
+
+        public Actor(string firstName, string lastName)
+        {
+            this.FirstName = firstName;
+            this.LastName = lastName;
+            this.Movies = new List<Movie>();
+        }
         public Actor()
         {
             Console.WriteLine("FirstName?");
