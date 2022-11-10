@@ -8,12 +8,10 @@
     using System.Threading.Tasks;
     using MovieDatabase;
     using MySql.Data.MySqlClient;
-
     public class MovieCrud : IDisposable
     {
 #pragma warning disable CS8604 // Possible null reference argument.
         MySqlConnection? connection;
-
         public MovieCrud(string server, string user, string password, string database)
         {
             string connString = $"Server={server};Database={database};Uid={user};Pwd={password};";
@@ -209,7 +207,101 @@
         //    // Ta bort filmen från databasen
         //    // Ta bort alla relationer mellan filmen och skådespelarna från databasen
         //}
+        public DataTable Query(string sql)
+        {
+            var dt = new DataTable();
+            var adt = new MySqlDataAdapter(sql, cnn);
+            adt.Fill(dt);
+            return dt;
+        }
+        public bool CheckIfMovieExists(Movie movie)
+        {
+            var dt = new DataTable();
+            string sql = $"SELECT * FROM Movies WHERE Title = '{movie.Title}' ";
+            dt = Query(sql);
+            if (dt.Rows.Count > 0) return true;
+            else return false;
+        }
+        public bool CheckIfActorExists(Actor actor)
+        {
+            var dt = new DataTable();
+            string sql = $"SELECT * FROM Actors WHERE FirstName = '{actor.FirstName}' AND LastName = '{actor.LastName}'";
+            dt = Query(sql);
+            if (dt.Rows.Count > 0) return true;
+            else return false;
+        }
+        public void AddMovie()
+        {
+            bool exists = false;
+            Movie movie = new Movie();
+            string sql = $"INSERT INTO `Movies`(`MovieId`,`Title`, `Year`, `Category`,`MainCharacter`,`IMDBLink`) VALUES ({movie.MovieId},'{movie.Title}',{movie.Year},'{movie.Category}','{movie.MainCharacter}','{movie.IMDBLink}')";
+            exists = CheckIfMovieExists(movie);
 
+            if (exists == false)
+            {
+                using var cmd = new MySqlCommand(sql, cnn);
+                cmd.ExecuteNonQuery();
+            }
+            else Console.WriteLine("Den filmen fanns redan");
+            // Kolla om filmen redan finns, uppdatera i så fall
+            // Om inte, lägg till filmen i databasen
+            // Lägg till skådespelarna i databasen
+            // Lägg till relationen mellan filmen och skådespelarna i databasen
+        }
+        public void DeleteMovie()
+        {
+
+            Console.WriteLine("Enter title of the Movie you want to delete");
+
+            string movieTitle = Console.ReadLine();
+            string sql = $"DELETE FROM `Movies` WHERE `Title` ='{movieTitle}'";
+            using var cmd = new MySqlCommand(sql, cnn);
+            cmd.ExecuteNonQuery();
+
+
+            // Ta bort filmen från databasen
+            // Ta bort alla relationer mellan filmen och skådespelarna från databasen
+        }
+        public void DeleteActor()
+        {
+            Console.WriteLine("Enter the Name of the Actor you want to delete");
+            Console.Write("FirstName:");
+            string actorFirstName = Console.ReadLine();
+            Console.Write("LastName:");
+            string actorLastName = Console.ReadLine();
+            string sql = $"DELETE FROM `Actors` WHERE `FirstName` ='{actorFirstName}' AND `LastName` = '{actorLastName}'";
+            using var cmd = new MySqlCommand(sql, cnn);
+            cmd.ExecuteNonQuery();
+            // Ta bort skådespelaren från databasen
+            // Ta bort alla relationer mellan skådespelaren och filmerna från databasen
+        }
+        public void AddActor()
+        {
+            bool exists = false;
+            Actor actor = new Actor();
+            string sql = $"INSERT INTO `Actors`(`Id`,`FirstName`, `LastName`, `BornYear`) VALUES ({actor.Id},'{actor.FirstName}','{actor.LastName}','{actor.BornYear}')";
+            exists = CheckIfActorExists(actor);
+
+            if (exists == false)
+            {
+                using var cmd = new MySqlCommand(sql, cnn);
+                cmd.ExecuteNonQuery();
+            }
+            else Console.WriteLine("Den filmen fanns redan");
+
+            // Kolla om skådespelaren finns i databasen
+            // Uppdatera i så fall annars
+            // Lägg till skådespelaren i databasen
+        }
+
+#pragma warning restore CS8604 // Possible null reference argument.
+        public void Dispose()
+        {
+            if (connection != null)
+            {
+                connection.Close();
+            }
+        }
         private List<ActorMovie> _DoGetActorMovies()
         {
             DataTable dataTable = runSql("SELECT * FROM ActorMovie");
@@ -280,16 +372,5 @@
             }
             return actors;
         }
-
-#pragma warning restore CS8604 // Possible null reference argument.
-        public void Dispose()
-        {
-            if (connection != null)
-            {
-                connection.Close();
-            }
-        }
-
     }
-
 }

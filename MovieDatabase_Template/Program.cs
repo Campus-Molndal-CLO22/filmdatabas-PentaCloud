@@ -1,4 +1,4 @@
-﻿using MovieDatabase;
+using MovieDatabase;
 using MovieDatabase_Template;
 using MySql.Data.MySqlClient;
 using System.Data;
@@ -45,6 +45,3 @@ public class Program
     }
 
 }
-
-
-
