@@ -40,7 +40,10 @@ public class Program
 
     private static MovieCrud CreateMovieCrud()
     {
-      
+        string server = "ns8.inleed.net";
+        string user = "s60127_Nora";
+        string password = "gOrplXLsSsassPvu";
+        string database = "s60127_PentaCloud";
         return new MovieCrud(server, user, password, database);
     }
 

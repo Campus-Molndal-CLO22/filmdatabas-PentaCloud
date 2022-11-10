@@ -210,7 +210,7 @@
         public DataTable Query(string sql)
         {
             var dt = new DataTable();
-            var adt = new MySqlDataAdapter(sql, cnn);
+            var adt = new MySqlDataAdapter(sql, connection);
             adt.Fill(dt);
             return dt;
         }
@@ -239,7 +239,7 @@
 
             if (exists == false)
             {
-                using var cmd = new MySqlCommand(sql, cnn);
+                using var cmd = new MySqlCommand(sql, connection);
                 cmd.ExecuteNonQuery();
             }
             else Console.WriteLine("Den filmen fanns redan");
@@ -255,7 +255,7 @@
 
             string movieTitle = Console.ReadLine();
             string sql = $"DELETE FROM `Movies` WHERE `Title` ='{movieTitle}'";
-            using var cmd = new MySqlCommand(sql, cnn);
+            using var cmd = new MySqlCommand(sql, connection);
             cmd.ExecuteNonQuery();
 
 
@@ -270,7 +270,7 @@
             Console.Write("LastName:");
             string actorLastName = Console.ReadLine();
             string sql = $"DELETE FROM `Actors` WHERE `FirstName` ='{actorFirstName}' AND `LastName` = '{actorLastName}'";
-            using var cmd = new MySqlCommand(sql, cnn);
+            using var cmd = new MySqlCommand(sql, connection);
             cmd.ExecuteNonQuery();
             // Ta bort skådespelaren från databasen
             // Ta bort alla relationer mellan skådespelaren och filmerna från databasen
@@ -284,7 +284,7 @@
 
             if (exists == false)
             {
-                using var cmd = new MySqlCommand(sql, cnn);
+                using var cmd = new MySqlCommand(sql, connection);
                 cmd.ExecuteNonQuery();
             }
             else Console.WriteLine("Den filmen fanns redan");
