@@ -9,18 +9,24 @@
 
     public class Movie
     {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public int Year { get; set; }
+        public int MovieId { get; }
+        public string Title { get; }
+        public int Year { get; }
+        public string Category { get; }
+        public string MainCharacter { get; }
+        public string IMDBLink { get; }
+        public List<Actor> Actors { get; }
 
-        // Lägg till fler properties
-        public List<Actor> Actors { get; set; }
+        public Movie(int movieId, string title, int year, string category, string mainCharacter, string IMDBLink)
+        {
+            this.MovieId = movieId;
+            this.Title = title;
+            this.Year = year;
+            this.Category = category;
+            this.MainCharacter = mainCharacter;
+            this.IMDBLink = IMDBLink;
+            this.Actors = new List<Actor>();
+        }
     }
 
-    public class Actor
-    {
-        public int Id { get; set; }
-        public string Name;
-        public int BornYear { get; set; }
-    }
 }
