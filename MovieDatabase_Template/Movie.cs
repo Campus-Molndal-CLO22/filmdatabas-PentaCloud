@@ -37,8 +37,7 @@
         }
         public Movie()
         {
-            Console.WriteLine("MovieId");
-            MovieId = int.Parse(Console.ReadLine());
+            
             Console.WriteLine("Title?");
             Title = Console.ReadLine();
             Console.WriteLine("Year?");

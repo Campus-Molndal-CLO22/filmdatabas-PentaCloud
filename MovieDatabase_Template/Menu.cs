@@ -29,10 +29,12 @@ namespace MovieDatabase_Template
                             "|6. Delete Movie                         |\r\n" +
                             "|7. Delete Actor                         |\r\n" +
                             "|8. Remove Actor from Movie              |\r\n" +
+                            "|9. Search for Movie                     |\r\n" +
+                            "|10.Search for Actor                     |\r\n" +
                             "|0. Exit                                 |\r\n" +
                             "|****************************************|");
                 Console.Write(" Select an option: ");
-                int choice = InputUtil.SafeReadInt(1, 8, true);
+                int choice = InputUtil.SafeReadInt(1, 10, true);
                 Console.Clear();
                 switch (choice)
                 {
@@ -75,6 +77,12 @@ namespace MovieDatabase_Template
                         break;
                     case 8:
                         movieCrud.RemoveActorFromMovie();
+                        break;
+                    case 9: 
+                        movieCrud.SearchForMovies();
+                        break;
+                    case 10: 
+                        movieCrud.SearchForActors();
                         break;
                     case 0:
                         applicationRunning = false;

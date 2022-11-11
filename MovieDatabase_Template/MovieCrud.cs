@@ -9,6 +9,8 @@
     using System.Threading.Tasks;
     using MovieDatabase;
     using MySql.Data.MySqlClient;
+    using Org.BouncyCastle.Asn1;
+
     public class MovieCrud : IDisposable
     {
 #pragma warning disable CS8604 // Possible null reference argument.
@@ -82,9 +84,36 @@
             MySqlDataAdapter dataAdapter = new MySqlDataAdapter(sqlCommand);
             DataTable dataTable = new DataTable();
             dataAdapter.Fill(dataTable);
+            if (dataTable.Rows.Count > 0)
+            {
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    foreach (var item in row.ItemArray)
+                    {
+                        Console.Write(item + " ");
+                    }
+                    Console.WriteLine();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Inga rader hittades");
+            }
             return dataTable;
         }
 
+        public void SearchForMovies()
+        {
+            Console.WriteLine("Search for movie title or year");
+            var searchMovie = Console.ReadLine();
+            runSql($"SELECT Title,Year,MainCharacter FROM Movies WHERE Title LIKE '%{searchMovie}%' OR Year = '{searchMovie}'");
+        }
+        public void SearchForActors()
+        {
+            Console.WriteLine("Search for actors by first name or last name");
+            var searchActor = Console.ReadLine();
+            runSql($"SELECT FirstName,LastName,BornYear FROM Actors WHERE FirstName LIKE '%{searchActor}%' OR LastName LIKE '%{searchActor}%'");
+        }
         //public List<Movie> GetMoviesContaining(string search)
         //{
         //    // Hämta alla matchande filmer från databasen
@@ -325,7 +354,7 @@
             }
             else
             {
-                Console.WriteLine("DenThat actor did not exist");
+                Console.WriteLine("That actor did not exist");
             }
             // Ta bort skådespelaren från databasen
             // Ta bort alla relationer mellan skådespelaren och filmerna från databasen
